@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/goburrow/modbus"
 	"github.com/gonium/go-EM-CP-PP-ETH"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -14,12 +15,16 @@ var (
 	app = kingpin.New("em-cp-pp-eth", "An Interface for the Phoenix"+
 		" Contact EM-CP-PP-ETH charge controller")
 	verbose = app.Flag("verbose", "Verbose mode.").Short('v').Bool()
-	url     = app.Flag("url", "Host:Port to connect to, i.e."+
-		"10.0.0.1:502").Short('u').String()
+	host    = app.Flag("host", "Host to connect to, i.e."+
+		"10.0.0.1").Short('h').String()
+	port = app.Flag("port", "Port to connect to, i.e."+
+		"502").Short('p').Default("502").Uint16()
 	slaveid = app.Flag("slave", "slave id i.e. "+
 		"180").Short('s').Default("180").Uint8()
 	status = app.Command("status",
 		"query the charge controller state").Default()
+	reset = app.Command("reset",
+		"reset the charge controller via HTTP")
 	get = app.Command("get",
 		"get the actual charging current")
 	set = app.Command("set",
@@ -37,13 +42,13 @@ func main() {
 
 	cmd := kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	if *url == "" {
-		log.Fatal("Please specify the URL to connect to, i.e." +
-			" em-cp-pp-eth -u 10.0.0.1:502")
+	if *host == "" {
+		log.Fatal("Please specify the host to connect to, i.e." +
+			" em-cp-pp-eth -h 10.0.0.1")
 	}
-
+	url := fmt.Sprintf("%s:%d", *host, *port)
 	// Build a Modbus TCP connection to the controller
-	handler := modbus.NewTCPClientHandler(*url)
+	handler := modbus.NewTCPClientHandler(url)
 	handler.Timeout = 3 * time.Second
 	handler.SlaveId = *slaveid
 	handler.Logger = log.New(os.Stdout, "DEBUG ", log.LstdFlags)
@@ -52,8 +57,9 @@ func main() {
 		log.Fatalf("Failed to connect: %s", err.Error())
 	}
 	defer handler.Close()
-	client := modbus.NewClient(handler)
-	statusCache := EM_CP_PP_ETH.NewStatusCache(client)
+	modbusClient := modbus.NewClient(handler)
+	statusCache := EM_CP_PP_ETH.NewStatusCache(modbusClient)
+	commander := EM_CP_PP_ETH.NewCommander(modbusClient)
 
 	switch cmd {
 	case status.FullCommand():
@@ -63,15 +69,24 @@ func main() {
 		}
 		statusCache.WriteFormattedStatus(os.Stdout)
 
+	case reset.FullCommand():
+		log.Printf("Resetting host %s\n", *host)
+		err := commander.HTTPHardReset(*host)
+		if err != nil {
+			log.Fatal("Failed to reset charge controller: %s", err.Error())
+		}
+		log.Printf("Reset sent")
+
 	case get.FullCommand():
-		result, err := statusCache.ReadActualChargingCurrent()
+		result, err := commander.ReadActualChargingCurrent()
 		if err != nil {
 			log.Fatalf("Failed to read charging current: %s", err.Error())
 		} else {
 			log.Printf("Actual charging current: %d A", result)
 		}
+
 	case set.FullCommand():
-		result, err := statusCache.WriteActualChargingCurrent(*chargecurrent)
+		result, err := commander.WriteActualChargingCurrent(*chargecurrent)
 		if err != nil {
 			log.Fatalf("Failed to write charging current: %s", err.Error())
 		} else {

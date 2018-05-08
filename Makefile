@@ -3,10 +3,6 @@ all: build
 build:
 	@echo "Building for host platform"
 	@gb build all
-	#@echo "Building binary for Raspberry Pi"
-	#@GOOS=linux GOARCH=arm GOARM=5 gb build all
-	#@echo "Created binaries:"
-	#@ls -1 bin
 
 release-build: test clean assets
 	@echo "Building binaries..."
