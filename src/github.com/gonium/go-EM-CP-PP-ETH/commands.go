@@ -56,6 +56,54 @@ func (c *Commander) HTTPHardReset(host string) error {
 	return nil
 }
 
+func (c *Commander) ReadChargingEnabled() (result bool, err error) {
+	results, err := c.modbusClient.ReadCoils(402, 1)
+	if err != nil {
+		return false, err
+	}
+	if results[0] == 0 {
+		return false, nil
+	}
+	return true, nil
+}
+
+func (c *Commander) WriteChargingEnabled(newstate bool) (err error) {
+	var update uint16
+	update = 0x0000
+	if newstate {
+		update = 0xFF00
+	}
+	_, err = c.modbusClient.WriteSingleCoil(402, update)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Commander) ReadDigimodeEnabled() (result bool, err error) {
+	results, err := c.modbusClient.ReadCoils(401, 1)
+	if err != nil {
+		return false, err
+	}
+	if results[0] == 0 {
+		return false, nil
+	}
+	return true, nil
+}
+
+func (c *Commander) WriteDigimodeEnabled(newstate bool) (err error) {
+	var update uint16
+	update = 0x0000
+	if newstate {
+		update = 0xFF00
+	}
+	_, err = c.modbusClient.WriteSingleCoil(401, update)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *Commander) ReadActualChargingCurrent() (result uint16, err error) {
 	results, err := c.modbusClient.ReadHoldingRegisters(300, 1)
 	if err != nil {
