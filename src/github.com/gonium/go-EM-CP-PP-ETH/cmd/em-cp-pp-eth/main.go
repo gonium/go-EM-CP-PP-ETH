@@ -45,8 +45,8 @@ var (
 
 	digimode = app.Command("digimode", "make the charging station"+
 		" (un)available")
-	setdigimode = digimode.Command("set", "switch to digital "+
-		"communication mode")
+	setdigimode = digimode.Command("set", "set digital "+
+		"communication mode {true|false}")
 	newdigimode = setdigimode.Arg("state",
 		"true: enabled, false: disabled").Required().Bool()
 	getdigimode = digimode.Command("get", "get the digital communication"+
@@ -70,7 +70,9 @@ func main() {
 	handler := modbus.NewTCPClientHandler(url)
 	handler.Timeout = 3 * time.Second
 	handler.SlaveId = *slaveid
-	handler.Logger = log.New(os.Stdout, "DEBUG ", log.LstdFlags)
+	if *verbose {
+		handler.Logger = log.New(os.Stdout, "DEBUG ", log.LstdFlags)
+	}
 	err := handler.Connect()
 	if err != nil {
 		log.Fatalf("Failed to connect: %s", err.Error())
