@@ -1,3 +1,7 @@
+# gb builds
+bin
+pkg
+
 # Binaries for programs and plugins
 *.exe
 *.dll
