@@ -276,7 +276,7 @@ func (sc *StatusCache) parseInputRegisterStatus(input []byte) (err error) {
 	sc.Status.ReactivePower = float32(
 		binary.BigEndian.Uint32(sc.swapWords(input[44:48])))
 	sc.Status.ApparentPower = float32(
-		binary.BigEndian.Uint32(sc.swapWords(input[48:52])))
+		binary.BigEndian.Uint32(sc.swapWords(input[48:52]))) * 10
 	sc.Status.PowerFactor = float32(
 		binary.BigEndian.Uint32(sc.swapWords(input[52:56]))) / 1000
 	sc.Status.Energy =
