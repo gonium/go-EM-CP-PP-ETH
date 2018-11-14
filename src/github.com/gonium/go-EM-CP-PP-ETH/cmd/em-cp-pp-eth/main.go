@@ -18,9 +18,9 @@ var (
 	host    = app.Flag("host", "Host to connect to, i.e."+
 		"10.0.0.1").Short('h').String()
 	port = app.Flag("port", "Port to connect to, i.e."+
-		"502").Short('p').Default("502").Uint16()
+		"502 (default)").Short('p').Default("502").Uint16()
 	slaveid = app.Flag("slave", "slave id i.e. "+
-		"180").Short('s').Default("180").Uint8()
+		"180 (default)").Short('s').Default("180").Uint8()
 	status = app.Command("status",
 		"query the charge controller state").Default()
 	reset = app.Command("reset",
