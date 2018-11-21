@@ -62,9 +62,9 @@ type Status struct {
 	MaxPower              float32
 	CurrentChargePower    float32
 	Frequency             float32
-	L1MaxPower            float32
-	L2MaxPower            float32
-	L3MaxPower            float32
+	L1MaxCurrent          float32
+	L2MaxCurrent          float32
+	L3MaxCurrent          float32
 	OverCurrentProtection uint16
 	DigitalInputStates    DigiInputs
 	DigitalOutputStates   DigiOutputs
@@ -282,16 +282,16 @@ func (sc *StatusCache) parseInputRegisterStatus(input []byte) (err error) {
 	sc.Status.Energy =
 		float32(binary.BigEndian.Uint32(sc.swapWords(input[56:60]))) / 100
 	sc.Status.MaxPower = float32(
-		binary.BigEndian.Uint32(sc.swapWords(input[60:64])))
+		binary.BigEndian.Uint32(sc.swapWords(input[60:64]))) * 10
 	sc.Status.CurrentChargePower = float32(
 		binary.BigEndian.Uint32(sc.swapWords(input[64:68])))
 	sc.Status.Frequency = float32(
-		binary.BigEndian.Uint32(sc.swapWords(input[68:72])))
-	sc.Status.L1MaxPower = float32(
+		binary.BigEndian.Uint32(sc.swapWords(input[68:72]))) / 100
+	sc.Status.L1MaxCurrent = float32(
 		binary.BigEndian.Uint32(sc.swapWords(input[72:76])))
-	sc.Status.L2MaxPower = float32(
+	sc.Status.L2MaxCurrent = float32(
 		binary.BigEndian.Uint32(sc.swapWords(input[76:80])))
-	sc.Status.L3MaxPower = float32(
+	sc.Status.L3MaxCurrent = float32(
 		binary.BigEndian.Uint32(sc.swapWords(input[80:84])))
 	sc.Status.OverCurrentProtection = binary.BigEndian.Uint16(input[84:86])
 
@@ -328,11 +328,11 @@ func (sc StatusCache) WriteFormattedStatus(out io.Writer) {
 	fmt.Fprintf(out, "Apparent power [VA]: %.2f\n", sc.Status.ApparentPower)
 	fmt.Fprintf(out, "Power factor: %.2f\n", sc.Status.PowerFactor)
 	fmt.Fprintf(out, "Energy [kWh]: %.2f\n", sc.Status.Energy)
-	fmt.Fprintf(out, "Max Power [W]: %.2f\n", sc.Status.MaxPower)
-	fmt.Fprintf(out, "Current Charge Power [W]: %.2f\n", sc.Status.CurrentChargePower)
+	fmt.Fprintf(out, "Max Power (charge sequence) [W]: %.2f\n", sc.Status.MaxPower)
+	fmt.Fprintf(out, "Energy (charge sequence) [kWh]: %.2f\n", sc.Status.CurrentChargePower)
 	fmt.Fprintf(out, "Frequency [Hz]: %.2f\n", sc.Status.Frequency)
-	fmt.Fprintf(out, "Max Power [W]: L1 %.2f, L2 %.2f, L3 %.2f\n", sc.Status.L1MaxPower,
-		sc.Status.L2MaxPower, sc.Status.L3MaxPower)
+	fmt.Fprintf(out, "Max Current [A]: L1 %.2f, L2 %.2f, L3 %.2f\n", sc.Status.L1MaxCurrent,
+		sc.Status.L2MaxCurrent, sc.Status.L3MaxCurrent)
 	fmt.Fprintf(out, "Overcurrent protection: %d\n", sc.Status.OverCurrentProtection)
 	fmt.Fprintf(out, "Digital inputs: %+v\n",
 		sc.Status.DigitalInputStates)
